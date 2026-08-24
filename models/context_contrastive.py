@@ -31,6 +31,7 @@ class ContextContrastiveNet(nn.Module):
         use_critic_score=False,
         fuse_score=True,
         fuse_beta=0.5,
+        fuse_isomeric=False,
         learn_fuse_beta=False,
         loss_type="infonce",
     ):
@@ -230,6 +231,7 @@ class HybridContextContrastiveNet(nn.Module):
         use_critic_score=False,
         fuse_score=True,
         fuse_beta=0.5,
+        fuse_isomeric=False,
         learn_fuse_beta=False,
         loss_type="infonce",
     ):
@@ -337,6 +339,30 @@ class HybridContextContrastiveNet(nn.Module):
             offset += n_pair
         assert offset == n
         return comparibility
+
+    @torch.no_grad()
+    def eval_contribution(self, context, target_index, edge_index, num_items, item_mask):
+        z_c, z_g = self.forward_branch(context, item_mask, edge_index)
+        z = self.fuse_beta * z_c + (1 - self.fuse_beta) * z_g
+        n = len(z)
+        num_pairs = (num_items - 1) * num_items
+        assert len(z) == len(target_index) == num_pairs.sum().item()
+        scores = z.matmul(self.features) / self.tau
+        # mask out items in other splits
+        inf = torch.finfo(scores.dtype).max
+        prob = F.softmax(scores.masked_fill_(~self.split_mask.bool(), -torch.inf), dim=-1)
+        # n
+        logprob = torch.log(prob[torch.arange(n), target_index.view(-1)])
+        index = []
+        offset = 0
+        for n_item in num_items.tolist():
+            n_pair = n_item * (n_item - 1)
+            scores = logprob[offset : offset + n_pair].reshape(n_item, n_item - 1)
+            scores = scores.mean(dim=-1)
+            index.append(torch.argmin(scores).item())
+            offset += n_pair
+        assert offset == n
+        return index
 
     def train_batch(self, x, pos, neg, edge_index, batch_size, item_mask):
         anc_l, anc_g = self.forward_branch(x, item_mask, edge_index)
