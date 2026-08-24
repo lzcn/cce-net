@@ -1,0 +1,7 @@
+runs/
+summaries/
+__pycache__/
+*.pyc
+*.log
+events.out.tfevents.*
+.ipynb_checkpoints/
