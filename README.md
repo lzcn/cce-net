@@ -2,8 +2,6 @@
 
 Official implementation of **CCE-Net: Learning Fashion Compatibility with Context Conditioning Embedding** for fashion outfit compatibility modeling.
 
-This repository has been refactored with the assistance of LLMs.
-
 ## Requirements
 
 See `requirements.txt`. Tested with PyTorch 2.6.0 (CUDA 11.8) and PyTorch Geometric 2.6.1.
@@ -82,4 +80,6 @@ Add `--neg-mode RandomReplace --num-replace k` for the replacement setting.
 
 ## License
 
-Released under the MIT License for research purposes.
+Released under the MIT License.
+
+This repository has been refactored with the assistance of LLMs.
